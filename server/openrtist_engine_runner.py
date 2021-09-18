@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 
-from gabriel_server.network_engine import server_runner
+from gabriel_server.network_engine import engine_runner
+from openrtist_engine import OpenrtistEngine
+from timing_engine import TimingEngine
 import logging
+import cv2
 import argparse
 import importlib
 
-DEFAULT_PORT = 9099
-DEFAULT_NUM_TOKENS = 2
-INPUT_QUEUE_MAXSIZE = 60
+DEFAULT_STYLE = "the_scream"
+COMPRESSION_PARAMS = [cv2.IMWRITE_JPEG_QUALITY, 67]
 
 logging.basicConfig(level=logging.INFO)
-
 logger = logging.getLogger(__name__)
-
 
 def create_adapter(openvino, cpu_only, force_torch, use_myriad):
     """Create the best adapter based on constraints passed as CLI arguments."""
@@ -70,22 +70,56 @@ def create_adapter(openvino, cpu_only, force_torch, use_myriad):
 
     return TorchAdapter(True, DEFAULT_STYLE)
 
-
 def main():
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        "-o",
+        "--openvino",
+        action="store_true",
+        help="Pass this flag to force the use of OpenVINO."
+        "Otherwise Torch may be used")
+    
+    parser.add_argument(
+        "-c",
+        "--cpu-only",
+        action="store_true",
+        help="Pass this flag to prevent the GPU from being used.")
 
     parser.add_argument(
-        "-t", "--tokens", type=int, default=DEFAULT_NUM_TOKENS,
-        help="number of tokens")
+        "--torch",
+        action="store_true",
+        help="Set this flag to force the use of torch. Otherwise"
+        "OpenVINO may be used.")
 
     parser.add_argument(
-        "-p", "--port", type=int, default=DEFAULT_PORT, help="Set port number")
-    args = parser.parse_args()
+        "--myriad",
+        action="store_true",
+        help="Set this flag to use Myriad VPU (implies use OpenVino).")
 
-    server_runner.run(websocket_port=args.port, zmq_address='tcp://*:5555', num_tokens=args.tokens,
-                  input_queue_maxsize=INPUT_QUEUE_MAXSIZE)
+    parser.add_argument(
+        "--timing", action="store_true", help="Print timing information"
+    )
 
+    parser.add_argument(
+        "-g", "--gabriel",  default="tcp://localhost:5555", help="Gabriel server endpoint."
+    )
+
+    args, _ = parser.parse_known_args()
+
+    def engine_setup():
+        adapter = create_adapter(args.openvino, args.cpu_only, args.torch,
+                                 args.myriad)
+        if args.timing:
+            engine = TimingEngine(COMPRESSION_PARAMS, adapter)
+        else:
+            engine = OpenrtistEngine(COMPRESSION_PARAMS, adapter)
+
+        return engine
+
+    logger.info("Starting openrtist recognition cognitive engine..")
+    engine_runner.run(engine=engine_setup(), source_name=OpenrtistEngine.SOURCE_NAME, server_address=args.gabriel, all_responses_required=True)
 
 if __name__ == "__main__":
     main()
