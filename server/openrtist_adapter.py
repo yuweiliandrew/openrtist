@@ -37,9 +37,9 @@ class OpenrtistAdapter(ABC):
             self.set_style(new_style)
 
     def set_style(self, new_style):
-        if new_style not in self.supported_styles:
-            logger.error("Got style %s that we do not have. Ignoring", new_style)
-            return False
+        # if new_style not in self.supported_styles:
+        #     logger.error("Got style %s that we do not have. Ignoring", new_style)
+        #     return False
         self._style = new_style
         return True
 

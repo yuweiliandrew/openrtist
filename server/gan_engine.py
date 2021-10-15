@@ -95,15 +95,14 @@ class GanEngine(cognitive_engine.Engine):
         return result_wrapper
 
     def process_image(self, image):
-        # preprocessed = self.adapter.preprocessing(image)
-        # post_inference = self.inference(preprocessed)
-        # img_out = self.adapter.postprocessing(post_inference)
-        img_out = self.adapter.process(image)
-        return img_out
+        self.adapter.preprocessing(image)
+        self.inference()
+        img_out = self.adapter.postprocessing()
+        return img_out  
 
-    def inference(self, preprocessed):
+    def inference(self):
         """Allow timing engine to override this"""
-        return self.adapter.inference(preprocessed)
+        return self.adapter.inference()
 
     def _apply_watermark(self, image):
         img_mrk = image[-30:, -120:]  # The waterMark is of dimension 30x120
