@@ -14,31 +14,27 @@ logger = logging.getLogger(__name__)
 
 STARTUP_ONES_SIZE = (360, 240, 3)
 
-class OpenCVAdapter(OpenrtistAdapter):
+class GanTorchAdapter(OpenrtistAdapter):
     def __init__(self, cpu_only, default_style):
         super().__init__(default_style)
 
         self.cpu_only = cpu_only
         self.content_transform = transforms.Compose([transforms.ToTensor()])
 
-        opt = TestOptions().parse()
-        opt.num_threads = 0   # test code only supports num_threads = 0
-        opt.batch_size = 1    # test code only supports batch_size = 1
-        opt.serial_batches = True  # disable data shuffling; comment this line if results on randomly chosen images are needed.
-        opt.no_flip = True    # no flip; comment this line if results on flipped images are needed.
-        opt.display_id = -1   # no visdom display; the test code saves the results to a HTML file.
-        opt.model = 'cut'
-        # opt.name = 'summer2winter_yosemite_pretrained'
-        # opt.name = 'horse2zebra_cut_pretrained'
-        # opt.name = 'cat2dog_cut_pretrained'
-        opt.name = 'cityscapes_cut_pretrained'
-        # opt.checkpoints_dir = '../models/cycle_gan_models'
-        opt.checkpoints_dir = '../models/cut_gan_models'
+        self.opt = TestOptions().parse()
+        self.opt.num_threads = 0   # test code only supports num_threads = 0
+        self.opt.batch_size = 1    # test code only supports batch_size = 1
+        self.opt.serial_batches = True  # disable data shuffling; comment this line if results on randomly chosen images are needed.
+        self.opt.no_flip = True    # no flip; comment this line if results on flipped images are needed.
+        self.opt.display_id = -1   # no visdom display; the test code saves the results to a HTML file.
+        self.opt.model = 'cut'
+        self.opt.name = 'cityscapes_cut_pretrained'
+        self.opt.checkpoints_dir = '../models/cut_gan_models'
 
         # models_dir = "models/cycle_gan_models"
-        self.path = os.path.join(os.getcwd(), "..", opt.checkpoints_dir)
-        self.style_model = create_model(opt)
-        self.style_model.setup(opt)
+        self.path = os.path.join(os.getcwd(), self.opt.checkpoints_dir)
+        self.style_model = create_model(self.opt)
+        self.style_model.setup(self.opt)
         # self._update_model_style(None)
 
         for name in os.listdir(self.path):
@@ -46,7 +42,8 @@ class OpenCVAdapter(OpenrtistAdapter):
                 self.add_supported_style(name[:-15])
 
     def set_style(self, new_style):
-        super().set_style(new_style)
+        if super().set_style(new_style):
+            self._update_model_style(new_style)
 
     def preprocessing(self, img):
         content_image = self.content_transform(img)
@@ -56,23 +53,17 @@ class OpenCVAdapter(OpenrtistAdapter):
         self.style_model.set_input(Variable(content_image))
 
     def inference(self):
-        # output = self.style_model(preprocessed)
-        # return output.data[0].clamp(0, 255).cpu().numpy()
         self.style_model.test()
     
     def postprocessing(self):
-        # return post_inference.transpose(1, 2, 0)
         visuals = self.style_model.get_current_visuals()
-        # print('LEN VISUALS', len(visuals))
         im_data = list(visuals.values())[1]
         img = tensor2im(im_data)
         return img
 
-    # def _update_model_style(self, new_style):
-    #     model = os.path.join(self.path, 'summer2winter_yosemite.pth')
-    #     self.style_model.load_state_dict(torch.load(model))
-    #     if not self.cpu_only:
-    #         self.style_model.cuda()
+    def _update_model_style(self, new_style):
+        self.opt.name = new_style + "_cut_pretrained"
+        self.style_model.setup(self.opt)
 
 def tensor2im(input_image, imtype=np.uint8):
     """"Converts a Tensor array into a numpy image array.

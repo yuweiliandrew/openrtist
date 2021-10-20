@@ -31,15 +31,16 @@ class OpenrtistAdapter(ABC):
             with open(os.path.join(self.path, "{}.txt".format(new_style)), "r") as f:
                 info_text = f.read()
         except IOError:
-            info_text = new_style + " -- Unknown"
+            # info_text = new_style + " -- Unknown"
+            info_text = new_style
         self.supported_styles[new_style] = info_text
         if self._style is None:
             self.set_style(new_style)
 
     def set_style(self, new_style):
-        # if new_style not in self.supported_styles:
-        #     logger.error("Got style %s that we do not have. Ignoring", new_style)
-        #     return False
+        if new_style not in self.supported_styles:
+            logger.error("Got style %s that we do not have. Ignoring", new_style)
+            return False
         self._style = new_style
         return True
 

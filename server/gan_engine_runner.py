@@ -34,9 +34,9 @@ def create_adapter(openvino, cpu_only, force_torch, use_myriad):
 
             if torch.cuda.is_available():
                 logger.info("Detected GPU / CUDA support")
-                from opencv_adapter import OpenCVAdapter
+                from gan_torch_adapter import GanTorchAdapter
 
-                return OpenCVAdapter(False, DEFAULT_STYLE)
+                return GanTorchAdapter(False, DEFAULT_STYLE)
             else:
                 logger.info("Failed to detect GPU / CUDA support")
 
@@ -66,9 +66,9 @@ def create_adapter(openvino, cpu_only, force_torch, use_myriad):
             return adapter
 
     logger.info("Using OpenCV with CPU")
-    from opencv_adapter import OpenCVAdapter
+    from gan_torch_adapter import GanTorchAdapter
 
-    return OpenCVAdapter(True, DEFAULT_STYLE)
+    return GanTorchAdapter(True, DEFAULT_STYLE)
 
 def main():
     parser = argparse.ArgumentParser(

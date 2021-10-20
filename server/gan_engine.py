@@ -4,13 +4,10 @@ import logging
 from gabriel_server import cognitive_engine
 from gabriel_protocol import gabriel_pb2
 import openrtist_pb2
-import os
-from io import BytesIO
 
 logger = logging.getLogger(__name__)
 
-import http.client, urllib.request, urllib.parse, urllib.error, base64
-import json
+import urllib.error
 
 class GanEngine(cognitive_engine.Engine):
     SOURCE_NAME = "openrtist"
