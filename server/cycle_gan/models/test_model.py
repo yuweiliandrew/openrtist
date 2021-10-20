@@ -50,11 +50,12 @@ class TestModel(BaseModel):
             input: a dictionary that contains the data itself and its metadata information.
         We need to use 'single_dataset' dataset mode. It only load images from one domain.
         """
-        self.real = input
+        self.real = input.to(self.device)
 
     def forward(self):
         """Run forward pass."""
         self.fake = self.netG(self.real)  # G(real)
+        self.fake = self.fake[:self.real.size(0)]
 
     def optimize_parameters(self):
         """No optimization for test model."""

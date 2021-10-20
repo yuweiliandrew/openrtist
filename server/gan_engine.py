@@ -9,9 +9,6 @@ from io import BytesIO
 
 logger = logging.getLogger(__name__)
 
-from azure.cognitiveservices.vision.face import FaceClient
-from azure.cognitiveservices.vision.face.models import FaceAttributeType
-from msrest.authentication import CognitiveServicesCredentials
 import http.client, urllib.request, urllib.parse, urllib.error, base64
 import json
 

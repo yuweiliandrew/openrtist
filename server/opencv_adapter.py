@@ -1,20 +1,18 @@
 
 from openrtist_adapter import OpenrtistAdapter
-from cycle_gan.models import create_model
-from cycle_gan.options.test_options import TestOptions
+from cut_gan.models import create_model
+from cut_gan.options.test_options import TestOptions
 import numpy as np
 from torchvision import transforms
 from torch.autograd import Variable
 import os
 import logging
-import cv2
 import torch
 
 logger = logging.getLogger(__name__)
 
 
 STARTUP_ONES_SIZE = (360, 240, 3)
-
 
 class OpenCVAdapter(OpenrtistAdapter):
     def __init__(self, cpu_only, default_style):
@@ -29,22 +27,23 @@ class OpenCVAdapter(OpenrtistAdapter):
         opt.serial_batches = True  # disable data shuffling; comment this line if results on randomly chosen images are needed.
         opt.no_flip = True    # no flip; comment this line if results on flipped images are needed.
         opt.display_id = -1   # no visdom display; the test code saves the results to a HTML file.
-        opt.model = 'test'
+        opt.model = 'cut'
         # opt.name = 'summer2winter_yosemite_pretrained'
-        opt.name = 'horse2zebra_pretrained'
-        opt.checkpoints_dir = '../models/cycle_gan_models'
+        # opt.name = 'horse2zebra_cut_pretrained'
+        # opt.name = 'cat2dog_cut_pretrained'
+        opt.name = 'cityscapes_cut_pretrained'
+        # opt.checkpoints_dir = '../models/cycle_gan_models'
+        opt.checkpoints_dir = '../models/cut_gan_models'
 
         # models_dir = "models/cycle_gan_models"
-        # self.path = os.path.join(os.getcwd(), "..", models_dir)
+        self.path = os.path.join(os.getcwd(), "..", opt.checkpoints_dir)
         self.style_model = create_model(opt)
         self.style_model.setup(opt)
         # self._update_model_style(None)
 
-        # for name in os.listdir(self.path):
-        #     if name.endswith(".model"):
-        #         self.add_supported_style(name[:-6])
-        # self.add_supported_style('Summer2Winter')
-        self.add_supported_style('Horse2Zebra')
+        for name in os.listdir(self.path):
+            if name.endswith("_cut_pretrained"):
+                self.add_supported_style(name[:-15])
 
     def set_style(self, new_style):
         super().set_style(new_style)
@@ -67,7 +66,7 @@ class OpenCVAdapter(OpenrtistAdapter):
         # print('LEN VISUALS', len(visuals))
         im_data = list(visuals.values())[1]
         img = tensor2im(im_data)
-        return img #.transpose(1, 2, 0)
+        return img
 
     # def _update_model_style(self, new_style):
     #     model = os.path.join(self.path, 'summer2winter_yosemite.pth')
